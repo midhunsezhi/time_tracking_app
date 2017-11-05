@@ -2,20 +2,20 @@ class TimersDashboard extends React.Component {
   state = {
     timers: [
       {
-        'title': 'Learn React',
-        'id': uuid.v4(),
-        'project': 'Web Domination',
-        'elapsed': 5456099,
+        title: 'Practice squat',
+        project: 'Gym Chores',
+        id: uuid.v4(),
+        elapsed: 5456099,
         runningSince: Date.now(),
       },
       {
-        'title': 'Learn extreme ironing',
-        'id': uuid.v4(),
-        'project': 'Household Chores',
-        'elapsed': 1273998,
+        title: 'Bake squash',
+        project: 'Kitchen Chores',
+        id: uuid.v4(),
+        elapsed: 1273998,
         runningSince: null,
-      }
-    ]
+      },
+    ],
   }
 
   handleCreateFormSubmit = (timer) => {
@@ -50,6 +50,25 @@ class TimersDashboard extends React.Component {
       ))
     });
   }
+  handleActionButton = (id) => {
+    const nextTimers = this.state.timers.map(timer => {
+      if(timer.id === id) {
+        if(timer.runningSince) {
+          return Object.assign({}, timer,{
+            runningSince : null
+          });
+        } else {
+          return Object.assign({}, timer,{
+            runningSince : Date.now()
+          });
+        }
+      } else {
+        return timer;
+      }
+    });
+
+    this.setState({timers: nextTimers});
+  }
   render() {
       return(
           <div className='ui three column centered grid'>
@@ -58,6 +77,7 @@ class TimersDashboard extends React.Component {
                     timers={this.state.timers}
                     onFormSubmit={this.handleEditFormSubmit}
                     onDeleteTimer={this.handleDelete}
+                    onActionClick={this.handleActionButton}
                   />
                   <ToggleableTimerForm
                       isOpen={true}
@@ -76,6 +96,9 @@ class EditableTimerList extends React.Component {
   handleDelete = (id) => {
     this.props.onDeleteTimer(id);
   }
+  handleActionButton = (id) => {
+    this.props.onActionClick(id);
+  }
   render() {
     const timers = this.props.timers.map(timer => (
       <EditableTimer
@@ -87,6 +110,7 @@ class EditableTimerList extends React.Component {
         runningSince={timer.runningSince}
         onFormSubmit={this.handleFormSubmit}
         onDeleteTimer={this.handleDelete}
+        onActionClick={this.handleActionButton}
       />
     ));
     return(
@@ -114,6 +138,9 @@ class EditableTimer extends React.Component {
   handleDelete = () => {
     this.props.onDeleteTimer(this.props.id);
   }
+  handleActionButton = (id) => {
+    this.props.onActionClick(id);
+  }
   render() {
     if(this.state.editFormOpen) {
       return(
@@ -135,6 +162,7 @@ class EditableTimer extends React.Component {
           runningSince={this.props.runningSince}
           onEditClick={this.handleEditClick}
           onDeleteTimer={this.handleDelete}
+          onActionClick={this.handleActionButton}
         />
       );
     }
@@ -246,8 +274,26 @@ class Timer extends React.Component {
   handleDelete = () => {
     this.props.onDeleteTimer();
   }
+  handleActionButton = () => {
+    this.props.onActionClick(this.props.id);
+  }
+  componentDidMount() {
+    this.forcedUpdateInterval = setInterval(() => this.forceUpdate(), 
+    50);
+  }
+  componentWillUnmount() {
+    clearInterval(this.forcedUpdateInterval);
+  }
+  
   render() {
-    const elapsedString = helpers.renderElapsedString(this.props.elapsed);
+    const actionButtonText = this.props.runningSince
+      ? 'Stop'
+      : 'Start';
+      const actionButtonColor = this.props.runningSince
+      ? 'red'
+      : 'green';
+    const elapsedString = helpers.renderElapsedString(
+      this.props.elapsed, this.props.runningSince);
     return (
       <div className='ui centered card'>
         <div className='content'>
@@ -275,8 +321,11 @@ class Timer extends React.Component {
             </span>
           </div>
         </div>
-        <div className='ui bottom attached blue basic button'>
-          Start
+        <div 
+          className={'ui bottom attached ' + actionButtonColor + ' basic button'}
+          onClick={this.handleActionButton}
+        >
+          {actionButtonText}
         </div>
       </div>
     );
